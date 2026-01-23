@@ -1,0 +1,193 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import axios from 'axios';
+
+dotenv.config();
+
+const app = express();
+const PORT = 3001;
+
+app.use(cors());
+app.use(express.json());
+
+const HUBSPOT_API_KEY = process.env.HUBSPOT_API_KEY;
+const USE_DUMMY_DATA = !HUBSPOT_API_KEY || HUBSPOT_API_KEY === 'YOUR_API_KEY_HERE' || process.env.USE_DUMMY_DATA === 'true';
+
+// Dummy data for development
+const dummyDeals = [
+  {
+    id: '1', name: 'Acme Corp - Enterprise License', stage: 'contractsent', amount: '75000', closeDate: '2026-02-15', owner: 'Sarah Chen', currentOffer: 15000,
+    performance: {
+      avgRevAds3m: 373, avgRevIAP3m: 0, avgExpenses3m: 0, avgOtherExpenses3m: 0,
+      avgProfit3m: 373, avgUAProfit: null, avgUARev3m: null, pctUAProfit: null, uaROI: null,
+      avgInstalls3m: 23559, avgOrgInstalls3m: 23559, pctOrgInstalls: 100,
+      topCountries: 'US, UK, CA', appRating: 4.7, retentionD1: 42, retentionD7: 18,
+      avgEngagementTime: null, lastDataUpdate: '2026-01-21',
+      revAdsLastMonth: 370, revIAPLastMonth: 0, expensesLastMonth: 0, otherExpensesLastMonth: 0,
+      profitLastMonth: 370, installsLastMonth: 25496, orgInstallsLastMonth: 25496, otherExpensesDetails: null
+    }
+  },
+  {
+    id: '2', name: 'TechStart Inc - Annual Plan', stage: 'qualifiedtobuy', amount: '24000', closeDate: '2026-02-28', owner: 'Mike Johnson', currentOffer: 28000,
+    performance: {
+      avgRevAds3m: 890, avgRevIAP3m: 250, avgExpenses3m: 120, avgOtherExpenses3m: 50,
+      avgProfit3m: 970, avgUAProfit: 450, avgUARev3m: 600, pctUAProfit: 75, uaROI: 2.5,
+      avgInstalls3m: 45000, avgOrgInstalls3m: 32000, pctOrgInstalls: 71,
+      topCountries: 'US, DE, FR', appRating: 4.5, retentionD1: 38, retentionD7: 15,
+      avgEngagementTime: 12.5, lastDataUpdate: '2026-01-20',
+      revAdsLastMonth: 920, revIAPLastMonth: 280, expensesLastMonth: 100, otherExpensesLastMonth: 30,
+      profitLastMonth: 1070, installsLastMonth: 48000, orgInstallsLastMonth: 35000, otherExpensesDetails: 'Marketing'
+    }
+  },
+  {
+    id: '3', name: 'Global Solutions - Expansion', stage: 'closedwon', amount: '150000', closeDate: '2026-01-10', owner: 'Sarah Chen', currentOffer: 180000,
+    performance: {
+      avgRevAds3m: 2500, avgRevIAP3m: 1800, avgExpenses3m: 500, avgOtherExpenses3m: 200,
+      avgProfit3m: 3600, avgUAProfit: 1200, avgUARev3m: 1500, pctUAProfit: 80, uaROI: 3.2,
+      avgInstalls3m: 120000, avgOrgInstalls3m: 85000, pctOrgInstalls: 71,
+      topCountries: 'US, JP, BR', appRating: 4.8, retentionD1: 52, retentionD7: 28,
+      avgEngagementTime: 18.3, lastDataUpdate: '2026-01-22',
+      revAdsLastMonth: 2800, revIAPLastMonth: 2100, expensesLastMonth: 450, otherExpensesLastMonth: 180,
+      profitLastMonth: 4270, installsLastMonth: 135000, orgInstallsLastMonth: 95000, otherExpensesDetails: null
+    }
+  },
+  {
+    id: '4', name: 'Startup Labs - Pilot Program', stage: 'presentationscheduled', amount: '12000', closeDate: '2026-03-01', owner: 'Alex Rivera', currentOffer: 5000,
+    performance: {
+      avgRevAds3m: 150, avgRevIAP3m: 0, avgExpenses3m: 80, avgOtherExpenses3m: 0,
+      avgProfit3m: 70, avgUAProfit: null, avgUARev3m: null, pctUAProfit: null, uaROI: null,
+      avgInstalls3m: 8500, avgOrgInstalls3m: 8500, pctOrgInstalls: 100,
+      topCountries: 'US', appRating: 4.2, retentionD1: 35, retentionD7: 12,
+      avgEngagementTime: 8.2, lastDataUpdate: '2026-01-19',
+      revAdsLastMonth: 180, revIAPLastMonth: 0, expensesLastMonth: 75, otherExpensesLastMonth: 0,
+      profitLastMonth: 105, installsLastMonth: 9200, orgInstallsLastMonth: 9200, otherExpensesDetails: null
+    }
+  },
+  {
+    id: '5', name: 'MegaCorp - Custom Integration', stage: 'decisionmakerboughtin', amount: '95000', closeDate: '2026-02-20', owner: 'Mike Johnson', currentOffer: 120000,
+    performance: {
+      avgRevAds3m: 1800, avgRevIAP3m: 3200, avgExpenses3m: 800, avgOtherExpenses3m: 300,
+      avgProfit3m: 3900, avgUAProfit: 2100, avgUARev3m: 2800, pctUAProfit: 75, uaROI: 2.8,
+      avgInstalls3m: 95000, avgOrgInstalls3m: 55000, pctOrgInstalls: 58,
+      topCountries: 'US, UK, AU', appRating: 4.6, retentionD1: 48, retentionD7: 24,
+      avgEngagementTime: 15.7, lastDataUpdate: '2026-01-21',
+      revAdsLastMonth: 1950, revIAPLastMonth: 3500, expensesLastMonth: 750, otherExpensesLastMonth: 280,
+      profitLastMonth: 4420, installsLastMonth: 102000, orgInstallsLastMonth: 58000, otherExpensesDetails: 'Server costs'
+    }
+  },
+  {
+    id: '6', name: 'Local Business Pro', stage: 'closedlost', amount: '8500', closeDate: '2026-01-05', owner: 'Alex Rivera', currentOffer: 2000,
+    performance: {
+      avgRevAds3m: 45, avgRevIAP3m: 0, avgExpenses3m: 60, avgOtherExpenses3m: 20,
+      avgProfit3m: -35, avgUAProfit: null, avgUARev3m: null, pctUAProfit: null, uaROI: -0.5,
+      avgInstalls3m: 2100, avgOrgInstalls3m: 1800, pctOrgInstalls: 86,
+      topCountries: 'US', appRating: 3.8, retentionD1: 22, retentionD7: 8,
+      avgEngagementTime: 4.5, lastDataUpdate: '2026-01-18',
+      revAdsLastMonth: 30, revIAPLastMonth: 0, expensesLastMonth: 55, otherExpensesLastMonth: 15,
+      profitLastMonth: -40, installsLastMonth: 1900, orgInstallsLastMonth: 1650, otherExpensesDetails: 'Support'
+    }
+  },
+  {
+    id: '7', name: 'CloudFirst - Team Plan', stage: 'appointmentscheduled', amount: '36000', closeDate: '2026-03-15', owner: 'Sarah Chen', currentOffer: 18000,
+    performance: {
+      avgRevAds3m: 620, avgRevIAP3m: 180, avgExpenses3m: 150, avgOtherExpenses3m: 40,
+      avgProfit3m: 610, avgUAProfit: 280, avgUARev3m: 350, pctUAProfit: 80, uaROI: 1.9,
+      avgInstalls3m: 32000, avgOrgInstalls3m: 24000, pctOrgInstalls: 75,
+      topCountries: 'US, CA, MX', appRating: 4.4, retentionD1: 40, retentionD7: 17,
+      avgEngagementTime: 11.2, lastDataUpdate: '2026-01-20',
+      revAdsLastMonth: 680, revIAPLastMonth: 210, expensesLastMonth: 140, otherExpensesLastMonth: 35,
+      profitLastMonth: 715, installsLastMonth: 35000, orgInstallsLastMonth: 26500, otherExpensesDetails: null
+    }
+  },
+  {
+    id: '8', name: 'DataDriven Analytics', stage: 'closedwon', amount: '62000', closeDate: '2026-01-18', owner: 'Mike Johnson', currentOffer: 55000,
+    performance: {
+      avgRevAds3m: 1100, avgRevIAP3m: 850, avgExpenses3m: 280, avgOtherExpenses3m: 100,
+      avgProfit3m: 1570, avgUAProfit: 720, avgUARev3m: 900, pctUAProfit: 80, uaROI: 2.6,
+      avgInstalls3m: 58000, avgOrgInstalls3m: 42000, pctOrgInstalls: 72,
+      topCountries: 'US, UK, DE', appRating: 4.7, retentionD1: 45, retentionD7: 22,
+      avgEngagementTime: 14.8, lastDataUpdate: '2026-01-22',
+      revAdsLastMonth: 1250, revIAPLastMonth: 920, expensesLastMonth: 260, otherExpensesLastMonth: 90,
+      profitLastMonth: 1820, installsLastMonth: 63000, orgInstallsLastMonth: 46000, otherExpensesDetails: null
+    }
+  },
+  {
+    id: '9', name: 'Retail Plus - Multi-location', stage: 'contractsent', amount: '45000', closeDate: '2026-02-10', owner: 'Alex Rivera', currentOffer: 32000,
+    performance: {
+      avgRevAds3m: 780, avgRevIAP3m: 420, avgExpenses3m: 200, avgOtherExpenses3m: 80,
+      avgProfit3m: 920, avgUAProfit: 380, avgUARev3m: 480, pctUAProfit: 79, uaROI: 2.0,
+      avgInstalls3m: 41000, avgOrgInstalls3m: 29000, pctOrgInstalls: 71,
+      topCountries: 'US, CA', appRating: 4.3, retentionD1: 36, retentionD7: 14,
+      avgEngagementTime: 9.8, lastDataUpdate: '2026-01-21',
+      revAdsLastMonth: 850, revIAPLastMonth: 480, expensesLastMonth: 180, otherExpensesLastMonth: 70,
+      profitLastMonth: 1080, installsLastMonth: 44000, orgInstallsLastMonth: 31500, otherExpensesDetails: null
+    }
+  },
+  {
+    id: '10', name: 'FinanceHub - Compliance Package', stage: 'qualifiedtobuy', amount: '88000', closeDate: '2026-03-30', owner: 'Sarah Chen', currentOffer: 85000,
+    performance: {
+      avgRevAds3m: 1450, avgRevIAP3m: 2200, avgExpenses3m: 600, avgOtherExpenses3m: 250,
+      avgProfit3m: 2800, avgUAProfit: 1400, avgUARev3m: 1750, pctUAProfit: 80, uaROI: 2.3,
+      avgInstalls3m: 72000, avgOrgInstalls3m: 48000, pctOrgInstalls: 67,
+      topCountries: 'US, UK, SG', appRating: 4.5, retentionD1: 44, retentionD7: 20,
+      avgEngagementTime: 13.5, lastDataUpdate: '2026-01-22',
+      revAdsLastMonth: 1580, revIAPLastMonth: 2400, expensesLastMonth: 550, otherExpensesLastMonth: 220,
+      profitLastMonth: 3210, installsLastMonth: 78000, orgInstallsLastMonth: 52000, otherExpensesDetails: 'Compliance audit'
+    }
+  },
+];
+
+if (USE_DUMMY_DATA) {
+  console.log('Running with DUMMY DATA (no valid HubSpot API key configured)');
+}
+
+// Proxy endpoint for HubSpot deals
+app.get('/api/deals', async (req, res) => {
+  // Return dummy data if no valid API key
+  if (USE_DUMMY_DATA) {
+    return res.json({ deals: dummyDeals });
+  }
+
+  try {
+    const response = await axios.get(
+      'https://api.hubapi.com/crm/v3/objects/deals',
+      {
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        params: {
+          limit: 100,
+          properties: 'dealname,dealstage,amount,closedate,hubspot_owner_id',
+        },
+      }
+    );
+
+    const deals = response.data.results.map((deal) => ({
+      id: deal.id,
+      name: deal.properties.dealname,
+      stage: deal.properties.dealstage,
+      amount: deal.properties.amount,
+      closeDate: deal.properties.closedate,
+      ownerId: deal.properties.hubspot_owner_id,
+    }));
+
+    res.json({ deals });
+  } catch (error) {
+    console.error('HubSpot API Error:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch deals from HubSpot',
+      details: error.response?.data?.message || error.message,
+    });
+  }
+});
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', dummyData: USE_DUMMY_DATA });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
