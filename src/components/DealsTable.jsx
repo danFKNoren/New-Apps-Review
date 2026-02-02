@@ -7,15 +7,6 @@ function DealsTable({ deals, onDealClick }) {
     }).format(parseFloat(amount));
   };
 
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-    });
-  };
-
   const getStageLabel = (stage) => {
     const stageMap = {
       appointmentscheduled: 'Appointment Scheduled',
@@ -52,7 +43,6 @@ function DealsTable({ deals, onDealClick }) {
             <th>Owner</th>
             <th>Stage</th>
             <th>Current Offer</th>
-            <th>Close Date</th>
           </tr>
         </thead>
         <tbody>
@@ -62,11 +52,10 @@ function DealsTable({ deals, onDealClick }) {
               <td className="owner">{deal.owner || '-'}</td>
               <td>
                 <span className={`stage-badge ${getStageClass(deal.stage)}`}>
-                  {getStageLabel(deal.stage)}
+                  {deal.stageName || deal.stage || '-'}
                 </span>
               </td>
               <td className="amount">{formatCurrency(deal.currentOffer)}</td>
-              <td className="date">{formatDate(deal.closeDate)}</td>
             </tr>
           ))}
         </tbody>

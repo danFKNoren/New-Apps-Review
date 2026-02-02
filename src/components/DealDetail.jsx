@@ -1,7 +1,45 @@
-function DealDetail({ deal, onClose }) {
+import { useState } from 'react';
+import axios from 'axios';
+
+function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasPrevious, onTagRemoved }) {
   if (!deal) return null;
 
   const { performance } = deal;
+  const [isRemoving, setIsRemoving] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
+  const handleRemoveTagClick = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmRemove = async () => {
+    setShowConfirmation(false);
+    setIsRemoving(true);
+    try {
+      const response = await axios.post(
+        `http://localhost:3001/api/deals/${deal.id}/remove-tag`,
+        {},
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        if (onTagRemoved) {
+          onTagRemoved(deal.id);
+        }
+        onClose();
+      }
+    } catch (error) {
+      console.error('Error removing tag:', error);
+      alert('Failed to remove tag. Please try again.');
+      setIsRemoving(false);
+    }
+  };
+
+  const handleCancelRemove = () => {
+    setShowConfirmation(false);
+  };
+
+  const hubspotUrl = portalId ? `https://app.hubspot.com/contacts/${portalId}/deal/${deal.id}/` : null;
 
   const formatCurrency = (value) => {
     if (value === null || value === undefined) return '--';
@@ -37,6 +75,25 @@ function DealDetail({ deal, onClose }) {
       <div className="modal-content wide" onClick={(e) => e.stopPropagation()}>
         <button className="modal-close" onClick={onClose}>&times;</button>
 
+        <div className="modal-nav">
+          <button
+            className="modal-nav-btn"
+            onClick={onPrevious}
+            disabled={!hasPrevious}
+            title="Previous deal"
+          >
+            ↑
+          </button>
+          <button
+            className="modal-nav-btn"
+            onClick={onNext}
+            disabled={!hasNext}
+            title="Next deal"
+          >
+            ↓
+          </button>
+        </div>
+
         <div className="modal-header compact">
           <div className="header-left">
             <h2>{deal.name}</h2>
@@ -44,9 +101,39 @@ function DealDetail({ deal, onClose }) {
           </div>
           <div className="header-meta">
             <span className={`stage-badge stage-${deal.stage === 'closedwon' ? 'won' : deal.stage === 'closedlost' ? 'lost' : 'active'}`}>
-              {deal.stage}
+              {deal.stageName || deal.stage}
             </span>
             <span className="last-updated">Updated: {performance.lastDataUpdate}</span>
+            {hubspotUrl && (
+              <a
+                href={hubspotUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hubspot-link"
+                title="Open in HubSpot"
+              >
+                Open in HubSpot →
+              </a>
+            )}
+            {deal.googlePlayPage && (
+              <a
+                href={deal.googlePlayPage}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hubspot-link google-play-link"
+                title="Open in Google Play"
+              >
+                Google Play →
+              </a>
+            )}
+            <button
+              onClick={handleRemoveTagClick}
+              disabled={isRemoving}
+              className="remove-tag-btn"
+              title="Remove Next-meeting tag"
+            >
+              {isRemoving ? 'Removing...' : 'Remove from List'}
+            </button>
           </div>
         </div>
 
@@ -64,6 +151,20 @@ function DealDetail({ deal, onClose }) {
 
         <div className="sections-row">
           <section className="detail-section">
+            <h3>Last Month</h3>
+            <div className="tiles-compact">
+              <Tile label="Rev (Ads)" value={formatCurrency(performance.revAdsLastMonth)} highlight />
+              <Tile label="Rev (IAP)" value={formatCurrency(performance.revIAPLastMonth)} highlight />
+              <Tile label="Profit" value={formatCurrency(performance.profitLastMonth)} highlight negative={isNegative(performance.profitLastMonth)} />
+              <Tile label="Expenses" value={formatCurrency(performance.expensesLastMonth)} />
+              <Tile label="Other Expenses" value={formatCurrency(performance.otherExpensesLastMonth)} />
+              <Tile label="Installs" value={formatNumber(performance.installsLastMonth)} highlight />
+              <Tile label="Organic Installs" value={formatNumber(performance.orgInstallsLastMonth)} />
+              <Tile label="Expense Details" value={performance.otherExpensesDetails || '--'} />
+            </div>
+          </section>
+
+          <section className="detail-section">
             <h3>Monthly Avg (3 Months)</h3>
             <div className="tiles-compact">
               <Tile label="Rev (Ads)" value={formatCurrency(performance.avgRevAds3m)} highlight />
@@ -78,7 +179,7 @@ function DealDetail({ deal, onClose }) {
             </div>
           </section>
 
-          <section className="detail-section">
+          <section className="detail-section app-metrics-section">
             <h3>App Metrics</h3>
             <div className="tiles-compact">
               <Tile label="Avg Installs" value={formatNumber(performance.avgInstalls3m)} highlight />
@@ -91,22 +192,33 @@ function DealDetail({ deal, onClose }) {
               <Tile label="Top Countries" value={performance.topCountries || '--'} />
             </div>
           </section>
-
-          <section className="detail-section">
-            <h3>Last Month</h3>
-            <div className="tiles-compact">
-              <Tile label="Rev (Ads)" value={formatCurrency(performance.revAdsLastMonth)} highlight />
-              <Tile label="Rev (IAP)" value={formatCurrency(performance.revIAPLastMonth)} highlight />
-              <Tile label="Profit" value={formatCurrency(performance.profitLastMonth)} highlight negative={isNegative(performance.profitLastMonth)} />
-              <Tile label="Expenses" value={formatCurrency(performance.expensesLastMonth)} />
-              <Tile label="Other Expenses" value={formatCurrency(performance.otherExpensesLastMonth)} />
-              <Tile label="Installs" value={formatNumber(performance.installsLastMonth)} highlight />
-              <Tile label="Organic Installs" value={formatNumber(performance.orgInstallsLastMonth)} />
-              <Tile label="Expense Details" value={performance.otherExpensesDetails || '--'} />
-            </div>
-          </section>
         </div>
+
+        {deal.transferSummary && (
+          <div className="transfer-summary-full">
+            <span className="transfer-summary-label">Transfer Summary</span>
+            <p className="transfer-summary-text">{deal.transferSummary}</p>
+          </div>
+        )}
       </div>
+
+      {showConfirmation && (
+        <div className="confirmation-overlay" onClick={handleCancelRemove}>
+          <div className="confirmation-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Are you sure?</h3>
+            <p>Remove "Next-meeting" tag from this deal?</p>
+            <p className="confirmation-note">The deal will be removed from this view.</p>
+            <div className="confirmation-actions">
+              <button onClick={handleCancelRemove} className="btn-cancel">
+                Cancel
+              </button>
+              <button onClick={handleConfirmRemove} className="btn-confirm-remove">
+                Yes, Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
