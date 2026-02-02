@@ -7,6 +7,9 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
   const { performance } = deal;
   const [isRemoving, setIsRemoving] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
+  const [isEditingTransferSummary, setIsEditingTransferSummary] = useState(false);
+  const [transferSummaryText, setTransferSummaryText] = useState(deal.transferSummary || '');
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleRemoveTagClick = () => {
     setShowConfirmation(true);
@@ -37,6 +40,38 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
 
   const handleCancelRemove = () => {
     setShowConfirmation(false);
+  };
+
+  const handleEditTransferSummary = () => {
+    setIsEditingTransferSummary(true);
+    setTransferSummaryText(deal.transferSummary || '');
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingTransferSummary(false);
+    setTransferSummaryText(deal.transferSummary || '');
+  };
+
+  const handleSaveTransferSummary = async () => {
+    setIsSaving(true);
+    try {
+      const response = await axios.post(
+        `http://localhost:3001/api/deals/${deal.id}/update-transfer-summary`,
+        { transferSummary: transferSummaryText },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        deal.transferSummary = transferSummaryText;
+        setIsEditingTransferSummary(false);
+        alert('Transfer summary updated successfully!');
+      }
+    } catch (error) {
+      console.error('Error updating transfer summary:', error);
+      alert('Failed to update transfer summary. Please try again.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const hubspotUrl = portalId ? `https://app.hubspot.com/contacts/${portalId}/deal/${deal.id}/` : null;
@@ -194,12 +229,51 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
           </section>
         </div>
 
-        {deal.transferSummary && (
-          <div className="transfer-summary-full">
+        <div className="transfer-summary-full">
+          <div className="transfer-summary-header">
             <span className="transfer-summary-label">Transfer Summary</span>
-            <p className="transfer-summary-text">{deal.transferSummary}</p>
+            {!isEditingTransferSummary && (
+              <button
+                onClick={handleEditTransferSummary}
+                className="edit-summary-btn"
+                title="Edit transfer summary"
+              >
+                ✏️
+              </button>
+            )}
           </div>
-        )}
+          {isEditingTransferSummary ? (
+            <>
+              <textarea
+                value={transferSummaryText}
+                onChange={(e) => setTransferSummaryText(e.target.value)}
+                className="transfer-summary-textarea"
+                rows="6"
+                placeholder="Enter transfer summary..."
+              />
+              <div className="transfer-summary-actions">
+                <button
+                  onClick={handleCancelEdit}
+                  className="btn-cancel-edit"
+                  disabled={isSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveTransferSummary}
+                  className="btn-save-edit"
+                  disabled={isSaving}
+                >
+                  {isSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </>
+          ) : (
+            <p className="transfer-summary-text">
+              {deal.transferSummary || 'No transfer summary available. Click edit to add one.'}
+            </p>
+          )}
+        </div>
       </div>
 
       {showConfirmation && (

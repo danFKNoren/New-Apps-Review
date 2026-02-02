@@ -494,6 +494,47 @@ app.get('/api/deals', requireAuth, async (req, res) => {
   }
 });
 
+// Update transfer summary for a deal (protected)
+app.post('/api/deals/:dealId/update-transfer-summary', requireAuth, async (req, res) => {
+  const { dealId } = req.params;
+  const { transferSummary } = req.body;
+
+  console.log(`[TRANSFER SUMMARY UPDATE] Request received for deal ID: ${dealId}`);
+
+  // For dummy data, just return success
+  if (USE_DUMMY_DATA) {
+    console.log('[TRANSFER SUMMARY UPDATE] Running in dummy mode - simulating success');
+    return res.json({ success: true, message: 'Transfer summary updated (dummy mode)' });
+  }
+
+  try {
+    console.log('[TRANSFER SUMMARY UPDATE] Updating deal in HubSpot...');
+    await axios.patch(
+      `https://api.hubapi.com/crm/v3/objects/deals/${dealId}`,
+      {
+        properties: {
+          transfer_summary: transferSummary || '',
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${HUBSPOT_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('[TRANSFER SUMMARY UPDATE] Successfully updated in HubSpot');
+    res.json({ success: true, message: 'Transfer summary updated successfully' });
+  } catch (error) {
+    console.error('[TRANSFER SUMMARY UPDATE] Error:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to update transfer summary',
+      details: error.response?.data?.message || error.message,
+    });
+  }
+});
+
 // Remove "Next-meeting" tag from a deal (protected)
 app.post('/api/deals/:dealId/remove-tag', requireAuth, async (req, res) => {
   const { dealId } = req.params;
