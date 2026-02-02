@@ -20,7 +20,7 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
     setIsRemoving(true);
     try {
       const response = await axios.post(
-        `http://localhost:3001/api/deals/${deal.id}/remove-tag`,
+        `/api/deals/${deal.id}/remove-tag`,
         {},
         { withCredentials: true }
       );
@@ -56,7 +56,7 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
     setIsSaving(true);
     try {
       const response = await axios.post(
-        `http://localhost:3001/api/deals/${deal.id}/update-transfer-summary`,
+        `/api/deals/${deal.id}/update-transfer-summary`,
         { transferSummary: transferSummaryText },
         { withCredentials: true }
       );
