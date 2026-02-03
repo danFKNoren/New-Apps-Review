@@ -260,15 +260,52 @@ body {
 }
 
 .table-container {
-  background: white;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.stage-section {
+  background: white;
+  border-radius: 0;
+  overflow: hidden;
+}
+
+.stage-section:first-child .stage-header {
+  border-radius: 12px 12px 0 0;
+}
+
+.stage-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 0.375rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stage-title {
+  color: white;
+  font-size: 0.88rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.stage-count {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 0.875rem;
+  font-weight: 500;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
 }
 
 .deals-table {
   width: 100%;
   border-collapse: collapse;
+  table-layout: fixed;
 }
 
 .deals-table th {
@@ -281,6 +318,21 @@ body {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   border-bottom: 1px solid #e0e0e0;
+}
+
+.deals-table th:nth-child(1),
+.deals-table td:nth-child(1) {
+  width: 50%;
+}
+
+.deals-table th:nth-child(2),
+.deals-table td:nth-child(2) {
+  width: 30%;
+}
+
+.deals-table th:nth-child(3),
+.deals-table td:nth-child(3) {
+  width: 20%;
 }
 
 .deals-table td {

@@ -62,6 +62,7 @@ const USE_DUMMY_DATA = !HUBSPOT_API_KEY || HUBSPOT_API_KEY === 'YOUR_API_KEY_HER
 
 // Cache for stage ID to name mapping, portal ID, and owner mapping
 let stageMapping = {};
+let stageOrder = {}; // Maps stage ID to display order
 let stageMappingLoaded = false;
 let portalId = null;
 let ownerMapping = {};
@@ -104,9 +105,11 @@ async function loadStageMapping() {
     );
 
     stageMapping = {};
+    stageOrder = {};
     for (const pipeline of response.data.results) {
       for (const stage of pipeline.stages) {
         stageMapping[stage.id] = stage.label;
+        stageOrder[stage.id] = stage.displayOrder;
       }
     }
     stageMappingLoaded = true;
@@ -445,6 +448,7 @@ app.get('/api/deals', requireAuth, async (req, res) => {
           name: props.dealname,
           stage: props.dealstage,
           stageName: stageMapping[props.dealstage] || props.dealstage,
+          stageOrder: stageOrder[props.dealstage] || 999,
           amount: props.amount,
           closeDate: props.closedate,
           ownerId: ownerId,

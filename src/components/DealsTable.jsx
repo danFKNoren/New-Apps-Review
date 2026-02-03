@@ -7,19 +7,6 @@ function DealsTable({ deals, onDealClick }) {
     }).format(parseFloat(amount));
   };
 
-  const getStageLabel = (stage) => {
-    const stageMap = {
-      appointmentscheduled: 'Appointment Scheduled',
-      qualifiedtobuy: 'Qualified to Buy',
-      presentationscheduled: 'Presentation Scheduled',
-      decisionmakerboughtin: 'Decision Maker Bought-In',
-      contractsent: 'Contract Sent',
-      closedwon: 'Closed Won',
-      closedlost: 'Closed Lost',
-    };
-    return stageMap[stage] || stage || '-';
-  };
-
   const getStageClass = (stage) => {
     if (stage === 'closedwon') return 'stage-won';
     if (stage === 'closedlost') return 'stage-lost';
@@ -34,32 +21,53 @@ function DealsTable({ deals, onDealClick }) {
     );
   }
 
+  // Group deals by stage
+  const dealsByStage = deals.reduce((acc, deal) => {
+    const stageId = deal.stage;
+    if (!acc[stageId]) {
+      acc[stageId] = {
+        stageName: deal.stageName || deal.stage,
+        stageOrder: deal.stageOrder || 999,
+        deals: []
+      };
+    }
+    acc[stageId].deals.push(deal);
+    return acc;
+  }, {});
+
+  // Sort stages by display order (descending - latest to earliest)
+  const sortedStages = Object.entries(dealsByStage).sort((a, b) => {
+    return b[1].stageOrder - a[1].stageOrder;
+  });
+
   return (
     <div className="table-container">
-      <table className="deals-table">
-        <thead>
-          <tr>
-            <th>Deal Name</th>
-            <th>Owner</th>
-            <th>Stage</th>
-            <th>Current Offer</th>
-          </tr>
-        </thead>
-        <tbody>
-          {deals.map((deal) => (
-            <tr key={deal.id} onClick={() => onDealClick(deal)} className="clickable-row">
-              <td className="deal-name">{deal.name || 'Untitled Deal'}</td>
-              <td className="owner">{deal.owner || '-'}</td>
-              <td>
-                <span className={`stage-badge ${getStageClass(deal.stage)}`}>
-                  {deal.stageName || deal.stage || '-'}
-                </span>
-              </td>
-              <td className="amount">{formatCurrency(deal.currentOffer)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      {sortedStages.map(([stageId, stageData]) => (
+        <div key={stageId} className="stage-section">
+          <div className="stage-header">
+            <h3 className="stage-title">{stageData.stageName}</h3>
+            <span className="stage-count">{stageData.deals.length} deal{stageData.deals.length !== 1 ? 's' : ''}</span>
+          </div>
+          <table className="deals-table">
+            <thead>
+              <tr>
+                <th>Deal Name</th>
+                <th>Owner</th>
+                <th>Current Offer</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stageData.deals.map((deal) => (
+                <tr key={deal.id} onClick={() => onDealClick(deal)} className="clickable-row">
+                  <td className="deal-name">{deal.name || 'Untitled Deal'}</td>
+                  <td className="owner">{deal.owner || '-'}</td>
+                  <td className="amount">{formatCurrency(deal.currentOffer)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
     </div>
   );
 }
