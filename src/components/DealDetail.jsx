@@ -10,6 +10,7 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
   const [isEditingTransferSummary, setIsEditingTransferSummary] = useState(false);
   const [transferSummaryText, setTransferSummaryText] = useState(deal.transferSummary || '');
   const [isSaving, setIsSaving] = useState(false);
+  const [isDrawerExpanded, setIsDrawerExpanded] = useState(false);
 
   const handleRemoveTagClick = () => {
     setShowConfirmation(true);
@@ -229,50 +230,62 @@ function DealDetail({ deal, portalId, onClose, onNext, onPrevious, hasNext, hasP
           </section>
         </div>
 
-        <div className="transfer-summary-full">
-          <div className="transfer-summary-header">
-            <span className="transfer-summary-label">Transfer Summary</span>
-            {!isEditingTransferSummary && (
+        <div className={`transfer-summary-drawer ${isDrawerExpanded ? 'expanded' : 'minimized'}`}>
+          <div className="drawer-handle" onClick={() => setIsDrawerExpanded(!isDrawerExpanded)}>
+            <div className="drawer-handle-content">
+              <span className="transfer-summary-label">Transfer Summary</span>
               <button
-                onClick={handleEditTransferSummary}
-                className="edit-summary-btn"
-                title="Edit transfer summary"
+                className="drawer-toggle-btn"
+                title={isDrawerExpanded ? 'Minimize drawer' : 'Expand drawer'}
               >
-                ✏️
+                {isDrawerExpanded ? '▼' : '▲'}
               </button>
+            </div>
+          </div>
+          <div className="drawer-content">
+            <div className="transfer-summary-actions-top">
+              {!isEditingTransferSummary && (
+                <button
+                  onClick={handleEditTransferSummary}
+                  className="edit-summary-btn"
+                  title="Edit transfer summary"
+                >
+                  ✏️ Edit
+                </button>
+              )}
+            </div>
+            {isEditingTransferSummary ? (
+              <>
+                <textarea
+                  value={transferSummaryText}
+                  onChange={(e) => setTransferSummaryText(e.target.value)}
+                  className="transfer-summary-textarea"
+                  rows="6"
+                  placeholder="Enter transfer summary..."
+                />
+                <div className="transfer-summary-actions">
+                  <button
+                    onClick={handleCancelEdit}
+                    className="btn-cancel-edit"
+                    disabled={isSaving}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveTransferSummary}
+                    className="btn-save-edit"
+                    disabled={isSaving}
+                  >
+                    {isSaving ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="transfer-summary-text">
+                {deal.transferSummary || 'No transfer summary available. Click edit to add one.'}
+              </p>
             )}
           </div>
-          {isEditingTransferSummary ? (
-            <>
-              <textarea
-                value={transferSummaryText}
-                onChange={(e) => setTransferSummaryText(e.target.value)}
-                className="transfer-summary-textarea"
-                rows="6"
-                placeholder="Enter transfer summary..."
-              />
-              <div className="transfer-summary-actions">
-                <button
-                  onClick={handleCancelEdit}
-                  className="btn-cancel-edit"
-                  disabled={isSaving}
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveTransferSummary}
-                  className="btn-save-edit"
-                  disabled={isSaving}
-                >
-                  {isSaving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </>
-          ) : (
-            <p className="transfer-summary-text">
-              {deal.transferSummary || 'No transfer summary available. Click edit to add one.'}
-            </p>
-          )}
         </div>
       </div>
 
