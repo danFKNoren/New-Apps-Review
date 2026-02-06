@@ -16,6 +16,27 @@ function App() {
     fetchDeals();
   }, []);
 
+  // Sort deals to match the display order in DealsTable (grouped by stage, sorted by stageOrder descending)
+  const sortDealsByStage = (dealsArray) => {
+    // Group deals by stage
+    const dealsByStage = dealsArray.reduce((acc, deal) => {
+      const stageId = deal.stage;
+      if (!acc[stageId]) {
+        acc[stageId] = {
+          stageOrder: deal.stageOrder || 999,
+          deals: []
+        };
+      }
+      acc[stageId].deals.push(deal);
+      return acc;
+    }, {});
+
+    // Sort stages by display order (descending) and flatten back into array
+    return Object.values(dealsByStage)
+      .sort((a, b) => b.stageOrder - a.stageOrder)
+      .flatMap(stage => stage.deals);
+  };
+
   const fetchDeals = async () => {
     try {
       setLoading(true);
@@ -30,7 +51,8 @@ function App() {
       }
 
       const data = await response.json();
-      setDeals(data.deals);
+      const sortedDeals = sortDealsByStage(data.deals);
+      setDeals(sortedDeals);
       setPortalId(data.portalId);
     } catch (err) {
       setError(err.message);
