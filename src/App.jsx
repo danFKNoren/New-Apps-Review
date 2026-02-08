@@ -155,7 +155,7 @@ function App() {
                 <span className="stat-label">Total Value</span>
               </div>
             </div>
-            <DealsTable deals={deals} onDealClick={handleDealClick} />
+            <DealsTable deals={deals} onDealClick={handleDealClick} onRemoveDeal={handleTagRemoved} />
           </>
         )}
       </main>

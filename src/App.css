@@ -322,17 +322,23 @@ body {
 
 .deals-table th:nth-child(1),
 .deals-table td:nth-child(1) {
-  width: 50%;
+  width: 45%;
 }
 
 .deals-table th:nth-child(2),
 .deals-table td:nth-child(2) {
-  width: 30%;
+  width: 25%;
 }
 
 .deals-table th:nth-child(3),
 .deals-table td:nth-child(3) {
   width: 20%;
+}
+
+.deals-table th:nth-child(4),
+.deals-table td:nth-child(4) {
+  width: 10%;
+  text-align: center;
 }
 
 .deals-table td {
@@ -373,6 +379,43 @@ body {
 
 .owner {
   color: #666;
+}
+
+.actions-column {
+  width: 60px;
+}
+
+.actions-cell {
+  text-align: center;
+  padding: 0.5rem !important;
+}
+
+.remove-icon-btn {
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  line-height: 1;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.remove-icon-btn:hover:not(:disabled) {
+  background: #fee2e2;
+  color: #dc2626;
+  transform: scale(1.1);
+}
+
+.remove-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .stage-badge {
